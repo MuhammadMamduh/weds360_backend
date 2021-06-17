@@ -1,34 +1,168 @@
 const express = require('express');
+const sharp = require('sharp');
 
 const Article = require('../models/article');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // get all Articles
-router.get('/articles', (req, res) => {
+router.get('/articles', async(req, res) => {
+    try{
+        const articles = await Article.find({deleted: false})
+        res.status(200).send(articles);
+    }catch(err){
+        console.log(err.message);
 
+        res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
+    }
 });
 
 //TODO: get all Articles of a specific user
 
 // Read an Article
-router.get('/articles/:id', (req, res)=>{
+router.get('/articles/:id', async(req, res)=>{
+
+    try{
+        if(!Article.validateId(req.params.id)){
+            throw new Error("Resource Not Found");
+        }
+
+        const article = await Article.findOne({_id: req.params.id, deleted: false})
+        if(!article)
+        {
+            throw new Error("Resource Not Found");
+        }
+        res.status(200).send(article);
+    }catch(err){
+        console.log(err.message);
+
+        if(err.message.includes("Resource Not Found"))
+        {
+            res.status(404).send({msg: err.message});
+        }
+        res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
+    }
 
 });
 
 // Create an Article
-router.post('/articles', auth, (req, res)=>{
+router.post('/articles', auth, upload.single('caption'), async(req, res)=>{
+    const newArticle = new Article({...req.body, author: req.user._id});
+    // console.log(req.file);
+    try{
+        
 
+        const buffer = await sharp(req.file.buffer).resize({width: 500, height: 400}).png().toBuffer();
+        newArticle.image = buffer; // in order to access the buffer in 'req.file.buffer' i must remove the dest property while creating the multer object (see line: 6)
+        await newArticle.save();
+
+        res.status(201).send(newArticle);
+    }catch(err){
+        console.log(err);
+        res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
+    }
 });
 
 // Update an Article
-router.patch('/articles/:id', auth, (req, res)=>{
+router.put('/article/update/:id', auth, async (req, res)=>{
+    const allowed = ['title', 'body'];
+    const upcoming = Object.keys(req.body);
 
+    const validUpdate = upcoming.every((member)=>allowed.includes(member));
+
+    if(!validUpdate)
+    {
+        res.status(500).send({error: 'A Field or more is NOT valid'});
+    }
+    if(!Article.validateId(req.params.id)){
+        return res.status(404).send({error: 'Resource Not Found'});
+    }
+    try{
+        const article = await Article.findOne({_id: req.params.id, author:req.user._id}); // AndUpdate(req.params.id,req.body, {new:true, runValidators:true}
+
+        if(!article)
+        {
+            res.status(404).send({error: 'Resource Not Found'});
+        }
+        upcoming.forEach((item)=> article[item]=req.body[item]);
+        await article.save();
+        res.status(200).send(article);
+    }catch(err){
+        console.log(err);
+
+        res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
+        
+    }
 });
 
-// Delete an Article
-router.delete('/articles/:id', auth, (req, res)=>{
+// SoftDelete an Article
+router.patch('/article/delete/:id', auth, async(req, res)=>{
+    try{
+        if(!Article.validateId(req.params.id)){
+            throw new Error("Resource Not Found");
+        }
 
+        const article = await Article.findOne({_id: req.params.id, deleted: false})
+        if(!article)
+        {
+            throw new Error("Resource Not Found");
+        }
+        article.deleted = true;
+        await article.save();
+        res.status(204).send({msg:"done"});
+    }catch(err){
+        console.log(err.message);
+
+        if(err.message.includes("Resource Not Found"))
+        {
+            res.status(404).send({msg: err.message});
+        }
+        res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
+    }
 });
 
+// HardDelete an Article
+router.delete('/article/delete/:id', auth, async(req, res)=>{
+    try{
+        if(!Article.validateId(req.params.id)){
+            throw new Error("Resource Not Found");
+        }
+
+        const article = await Article.findOneAndRemove({_id: req.params.id})
+        if(!article)
+        {
+            throw new Error("Resource Not Found");
+        }
+        res.status(204).send({msg:"done"});
+    }catch(err){
+        console.log(err.message);
+
+        if(err.message.includes("Resource Not Found"))
+        {
+            res.status(404).send({msg: err.message});
+        }
+        res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
+    }
+});
+
+// Get Article image ONLY
+router.get('/article/:id/image', auth, async(req, res)=>{
+    try {
+        if(!Article.validateId(req.params.id)){
+            throw new Error("Resource Not Found");
+        }
+        const article = await Article.findById(req.params.id);
+    
+        if(!article || !article.image)
+        {
+            throw new Error("Resource Not Found");
+        }
+
+        res.set('Content-Type', 'image/png');
+        res.status(200).send(article.image);
+    } catch (err) {
+        res.status(404).send(err.message);
+    }
+});
 module.exports = router;

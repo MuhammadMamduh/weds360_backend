@@ -61,6 +61,7 @@ const userSchema = new Schema
         avatar: {
             type: Buffer,
         },
+        // articles:[{ type: Schema.Types.ObjectId, ref: 'Article' }]
     },
     {
         timestamps: true
@@ -76,6 +77,18 @@ userSchema.virtual('articles', {
 // ______________________________________________________________________________________
 
 // Middleware
+userSchema.methods.toJSON = function (){
+    const user = this;
+    const userObject = user.toObject();
+    
+    delete userObject.password;
+    delete userObject.tokens;
+    // delete userObject.avatar;
+
+
+    return userObject;
+}
+
 userSchema.pre('save', async function(next){
     const user = this;
 
@@ -90,6 +103,7 @@ userSchema.pre('save', async function(next){
 userSchema.pre('remove', async function(next){
     const user = this;
     await Task.deleteMany({owner:user._id});
+
     next();
 });
 // ______________________________________________________________________________________

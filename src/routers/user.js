@@ -1,6 +1,7 @@
 const express = require('express');
 
 const User = require('../models/user');
+const Article = require('../models/article');
 const router = express.Router();
 const auth = require('../middleware/auth');
 //TODO: get all Articles of a specific user
@@ -12,7 +13,7 @@ router.post('/users', async(req, res)=>{
 
         const token = await newUser.generateAuthToken(); // & authorize
 
-        res.status(201).send({user, token});  // it's important to send the generated token back to the user, because thats what he's going to use to authenticate in the future.
+        res.status(201).send({newUser, token});  // it's important to send the generated token back to the user, because thats what he's going to use to authenticate in the future.
     }catch(err){
         console.log(err);
 
@@ -77,13 +78,29 @@ router.get('users/me', (req, res)=>{
 
 });
 
-// get all users
+// User's Articles
+router.get('/user/articles', auth, async(req, res)=>{
+    const user = new User(req.user);
+
+    await req.user.populate({
+        path: 'articles', 
+        match:{deleted:false}
+    }).execPopulate();
+    console.log(req.user.articles);
+
+    const result = {user: req.user, articles:req.user.articles}
+    res.send(result);
+});
+
+// get all users (Testing)
 router.get('/users', async (req, res) => {
     try{
         const users = await User.find({});
         res.status(200).send({users});
     }catch(err){
         console.log(err);
+        
+        es.status(500).send({err: "sth went wrong"});
     }
 });
 
