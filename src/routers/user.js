@@ -44,8 +44,10 @@ router.post('/users/login', async(req, res)=>{
 // Logout
 router.post('/users/logout', auth, async(req, res)=>{
     try{
+        const token = req.token;
+
         req.user.tokens = req.user.tokens.filter((token)=>{
-                return token!==req.body.token;
+            return token.token !== req.token;
         })
 
         await req.user.save();
