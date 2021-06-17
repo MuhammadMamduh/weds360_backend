@@ -1,4 +1,6 @@
 const express = require('express');
+require('./db/mongoose'); // MUST get loaded 
+
 const userRouter = require('./routers/user');
 const articleRouter = require('./routers/article');
 

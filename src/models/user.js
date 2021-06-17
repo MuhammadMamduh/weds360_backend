@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const { Schema } = mongoose;
 
+// Schema
 const userSchema = new Schema
 (
     {
@@ -101,6 +102,8 @@ userSchema.statics.findUserByCredentials = async (email, password) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+    // console.log(isMatch);
+
     if(!isMatch){
         throw new Error('Unable to login');
     }
@@ -114,7 +117,7 @@ userSchema.methods.generateAuthToken = async function(){
     const token = jwt.sign({_id:user._id.toString()}, process.env.JWT_SECRET);
 
     user.tokens.push({token});
-    await user.save();
+    await user.save(); // & here save actually does update
 
     return token;
 }
