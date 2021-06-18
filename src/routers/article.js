@@ -147,7 +147,7 @@ router.delete('/article/delete/:id', auth, async(req, res)=>{
 });
 
 // Get Article image ONLY
-router.get('/article/:id/image', auth, async(req, res)=>{
+router.get('/article/:id/image', async(req, res)=>{
     try {
         if(!Article.validateId(req.params.id)){
             throw new Error("Resource Not Found");
