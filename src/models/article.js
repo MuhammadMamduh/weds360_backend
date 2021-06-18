@@ -50,7 +50,7 @@ articleSchema.methods.toJSON = function (){
     const article = this;
     const articleObject = article.toObject();
     
-    delete articleObject.image;
+    // delete articleObject.image;
 
     return articleObject;
 }
