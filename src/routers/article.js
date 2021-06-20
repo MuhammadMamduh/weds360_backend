@@ -1,7 +1,8 @@
 const express = require('express');
 const sharp = require('sharp');
-
+const moment = require('moment');
 const Article = require('../models/article');
+const User = require('../models/user');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -48,8 +49,9 @@ router.get('/articles/:id', async(req, res)=>{
 
 // Create an Article
 router.post('/articles', auth, upload.single('caption'), async(req, res)=>{
+    console.log(req.body);
     const newArticle = new Article({...req.body, author: req.user._id});
-    // console.log(req.file);
+    
     try{
         
 
@@ -67,6 +69,7 @@ router.post('/articles', auth, upload.single('caption'), async(req, res)=>{
 // Update an Article
 router.put('/article/update/:id', auth, async (req, res)=>{
     const allowed = ['title', 'body'];
+    console.log(req.body);
     const upcoming = Object.keys(req.body);
 
     const validUpdate = upcoming.every((member)=>allowed.includes(member));
@@ -86,6 +89,7 @@ router.put('/article/update/:id', auth, async (req, res)=>{
             res.status(404).send({error: 'Resource Not Found'});
         }
         upcoming.forEach((item)=> article[item]=req.body[item]);
+
         await article.save();
         res.status(200).send(article);
     }catch(err){
