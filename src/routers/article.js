@@ -32,7 +32,7 @@ router.get('/articles/:id', async(req, res)=>{
             throw new Error("Resource Not Found");
         }
 
-        const article = await Article.findOne({_id: req.params.id, deleted: false})
+        const article = await Article.findOne({_id: req.params.id, deleted: false}).populate("author");
         if(!article)
         {
             throw new Error("Resource Not Found");
