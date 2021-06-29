@@ -10,7 +10,7 @@ const upload = require('../middleware/upload');
 // get all Articles
 router.get('/articles', async(req, res) => {
     try{
-        let articles = await Article.find({deleted: false}).populate("author");
+        let articles = await Article.find({deleted: false}).populate("author").skip(parseInt(req.query.skip)).limit(parseInt(req.query.limit));
         // articles = Object.entries(articles)
         console.log(typeof (articles));
 
