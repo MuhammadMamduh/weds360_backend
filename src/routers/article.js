@@ -52,13 +52,12 @@ router.get('/articles/:id', async(req, res)=>{
 
 // Create an Article
 router.post('/articles', auth, upload.single('caption'), async(req, res)=>{
-    console.log(req.body);
+    // console.log(req.body); // testing purposes
     const newArticle = new Article({...req.body, author: req.user._id});
     
     try{
-        
-
-        const buffer = await sharp(req.file.buffer).resize({width: 500, height: 400}).png().toBuffer();
+        const buffer = await sharp(req.file.buffer).resize({width: 500, height: 400}).toBuffer();
+        // const buffer = await sharp(req.file.buffer).resize({width: 500, height: 400}).png().toBuffer();
         newArticle.image = buffer; // in order to access the buffer in 'req.file.buffer' i must remove the dest property while creating the multer object (see line: 6)
         await newArticle.save();
 
@@ -67,6 +66,8 @@ router.post('/articles', auth, upload.single('caption'), async(req, res)=>{
         console.log(err);
         res.status(500).send({msg: "The server encountered an unexpected condition that prevented it from fulfilling the request."});
     }
+}, (error, req, res, next)=>{
+    res.status(400).send({msg: error.message});
 });
 
 // Update an Article

@@ -6,9 +6,9 @@ const upload = multer({
         fileSize: 1000000
     },
     fileFilter(req, file, cb){
-        if(!file.originalname.match('\.(jpg|jpeg|png)$'))
+        if(!file.originalname.match('\.(jpg|jpeg|png|gif)$'))
         {
-            return cb(new Error('Images with the following jpg|jpeg|png formats ONLY could be uploaded'));
+            return cb(new Error('Images with the following [ jpg | jpeg | png | gif ] formats ONLY could be uploaded'));
         }
 
         cb(undefined, true);
