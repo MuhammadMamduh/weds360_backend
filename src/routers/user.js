@@ -86,9 +86,12 @@ router.get('/user/articles', auth, async(req, res)=>{
 
     await req.user.populate({
         path: 'articles', 
-        match:{deleted:false}
-    }).execPopulate();
-    console.log(req.user.articles);
+        match:{deleted:false},
+        options:{
+            sort: {'updatedAt': -1}
+            }
+    }, ).execPopulate();
+    // console.log(req.user.articles); // testing purposes
 
     const result = {user: req.user, articles:req.user.articles}
     res.send(result);
